@@ -95,42 +95,56 @@ async def scrape():
         if not status_urls:
             print("WARN: zero articles found — check docs/debug/articles-list.png", flush=True)
 
-        # 2. Each article detail
+        # 2. Each article detail (trust the /articles tab as the filter)
         articles = []
         for i, url in enumerate(status_urls, 1):
             print(f"[2/3] ({i}/{len(status_urls)}) {url}", flush=True)
             try:
-                await page.goto(url, wait_until="domcontentloaded", timeout=30000)
-                await page.wait_for_timeout(4000)
+                await page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                # Wait until the article body or a fallback element appears
+                try:
+                    await page.wait_for_selector('article, h1', timeout=15000)
+                except Exception:
+                    pass
+                await page.wait_for_timeout(3000)
+
+                # Dump first article's debug snapshot for diagnostics
+                if i == 1:
+                    try:
+                        await page.screenshot(path=f"{debug_dir}/article-1.png", full_page=True)
+                        html = await page.content()
+                        with open(f"{debug_dir}/article-1.html", "w") as f:
+                            f.write(html[:200000])
+                    except Exception:
+                        pass
 
                 data = await page.evaluate("""
                     () => {
-                        const isArticle = !!Array.from(document.querySelectorAll('span, h2'))
-                            .find(el => el.innerText?.trim() === 'Article');
                         const titleEl = document.querySelector('h1');
-                        // Article body lives under <article>; first <article> on the page
                         const articleEl = document.querySelector('article');
                         const dateEl = document.querySelector('time');
                         const text = articleEl?.innerText || '';
-                        // Strip first lines that are nav/header noise
                         const cleaned = text
                             .split('\\n')
-                            .filter(l => l && !['Article','Follow','Reply'].includes(l.trim()))
+                            .filter(l => {
+                                const t = l.trim();
+                                if (!t) return false;
+                                if (['Article','Follow','Reply','Repost','Share'].includes(t)) return false;
+                                return true;
+                            })
                             .join('\\n');
                         return {
-                            isArticle,
                             title: titleEl?.innerText?.trim() || '',
                             content: cleaned,
+                            contentLen: cleaned.length,
                             date: dateEl?.getAttribute('datetime') || ''
                         };
                     }
                 """)
+                print(f"  title={data['title'][:60]!r} content_len={data['contentLen']}", flush=True)
 
-                if not data["isArticle"]:
-                    print(f"  skipped (not an Article): {url}", flush=True)
-                    continue
-                if not data["title"]:
-                    print(f"  skipped (no title): {url}", flush=True)
+                if not data["title"] or data["contentLen"] < 100:
+                    print(f"  skipped (title/content too short)", flush=True)
                     continue
 
                 articles.append({"url": url, **data})
@@ -174,5 +188,5 @@ async def scrape():
 
 if __name__ == "__main__":
     n = asyncio.run(scrape())
-    if n == 0:
-        sys.exit(1)
+    # Don't exit 1 even on 0 — let workflow commit debug artifacts
+    print(f"DONE: wrote {n} article(s)")
