@@ -123,28 +123,37 @@ async def scrape():
                         const articleEl = document.querySelector('article');
                         const dateEl = document.querySelector('time');
                         const text = articleEl?.innerText || '';
-                        // Strip nav/UI lines, then assume:
-                        //   line 0 = title
-                        //   line 1+ until first @username = body of the article
-                        // The page layout: "Article" | <title> | <user display name> | "@username" | "·" | <date> | "Follow" | counts | <body…>
+                        // Page text layout: "Article" | <display name> | "@handle" | "·" | <date> | "Follow" |
+                        //   ★ <title> ★ | <count> | <count> | <count> | <count> | <body…>
                         const rawLines = text.split('\\n').map(s => s.trim()).filter(Boolean);
-                        const noiseExact = new Set(['Article','Follow','Reply','Repost','Share','·','To view keyboard shortcuts, press question mark','View keyboard shortcuts']);
+                        const noiseExact = new Set(['Article','Follow','Reply','Repost','Share','·','Subscribe','Read all','Show more','To view keyboard shortcuts, press question mark','View keyboard shortcuts']);
                         const lines = rawLines.filter(l => !noiseExact.has(l));
-                        // Find body start: the index right after the first line that starts with '@' or matches a counts pattern
-                        let bodyStart = 0;
-                        for (let i = 0; i < lines.length; i++) {
-                            if (lines[i].startsWith('@') || /^\\d+(\\.\\d+)?[KMB]?$/.test(lines[i])) {
-                                bodyStart = Math.max(bodyStart, i + 1);
+                        const isNumber = (s) => /^[\\d.]+[KMB]?$/.test(s);
+                        const isHandle = (s) => /^@\\w+$/.test(s);
+
+                        // 1. Find @handle line
+                        const handleIdx = lines.findIndex(isHandle);
+                        if (handleIdx < 0) {
+                            return { title: '', content: '', contentLen: 0, rawHead: rawLines.slice(0, 8), date: dateEl?.getAttribute('datetime') || '' };
+                        }
+                        // 2. Title = next non-numeric, non-date line after handle
+                        let titleIdx = -1;
+                        for (let i = handleIdx + 1; i < lines.length; i++) {
+                            if (!isNumber(lines[i]) && !/^[A-Z][a-z]+ \\d+,?$/.test(lines[i])) {
+                                titleIdx = i;
+                                break;
                             }
                         }
-                        // Title = first non-noise line that isn't a date/handle
-                        const title = lines[0] || '';
+                        const title = titleIdx >= 0 ? lines[titleIdx] : '';
+                        // 3. Body starts after title; skip immediately-following counter lines
+                        let bodyStart = titleIdx + 1;
+                        while (bodyStart < lines.length && isNumber(lines[bodyStart])) bodyStart++;
                         const body = lines.slice(bodyStart).join('\\n');
                         return {
                             title,
                             content: body,
                             contentLen: body.length,
-                            rawHead: rawLines.slice(0, 8),
+                            rawHead: rawLines.slice(0, 10),
                             date: dateEl?.getAttribute('datetime') || ''
                         };
                     }
