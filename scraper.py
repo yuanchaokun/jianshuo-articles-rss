@@ -13,8 +13,17 @@ OUT_PATH = os.environ.get("OUT_PATH", "docs/feed.xml")
 
 
 async def scrape():
+    debug_dir = "docs/debug"
+    os.makedirs(debug_dir, exist_ok=True)
+
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True, args=["--no-sandbox"])
+        browser = await p.chromium.launch(
+            headless=True,
+            args=[
+                "--no-sandbox",
+                "--disable-blink-features=AutomationControlled",
+            ],
+        )
         ctx = await browser.new_context(
             user_agent=(
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -22,7 +31,15 @@ async def scrape():
                 "Chrome/120.0.0.0 Safari/537.36"
             ),
             viewport={"width": 1280, "height": 900},
+            locale="en-US",
+            timezone_id="Asia/Shanghai",
         )
+        # Anti-bot detection
+        await ctx.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'] });
+            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+        """)
         await ctx.add_cookies([{
             "name": "auth_token",
             "value": AUTH_TOKEN,
@@ -38,9 +55,32 @@ async def scrape():
         await page.goto(
             f"https://x.com/{USERNAME}/articles",
             wait_until="domcontentloaded",
-            timeout=30000,
+            timeout=45000,
         )
-        await page.wait_for_timeout(5000)
+        # Wait for either the tab content or a login wall to render
+        try:
+            await page.wait_for_selector('a[href*="/status/"], [data-testid="loginButton"]', timeout=20000)
+        except Exception:
+            pass
+        await page.wait_for_timeout(3000)
+
+        # Always dump a screenshot+html on the list page for diagnosis
+        try:
+            await page.screenshot(path=f"{debug_dir}/articles-list.png", full_page=False)
+            html = await page.content()
+            with open(f"{debug_dir}/articles-list.html", "w") as f:
+                f.write(html[:200000])
+            print(f"  saved debug to {debug_dir}/ (html {len(html)} chars)", flush=True)
+        except Exception as e:
+            print(f"  debug capture failed: {e}", flush=True)
+
+        # Detect logged-out state
+        is_logged_out = await page.evaluate(
+            '!!document.querySelector(\'[data-testid="loginButton"]\') '
+            '|| document.body.innerText.includes("Sign in to X")'
+        )
+        if is_logged_out:
+            print("ERROR: page shows login wall — cookie rejected by X", flush=True)
 
         status_urls = await page.evaluate("""
             () => Array.from(new Set(
@@ -53,7 +93,7 @@ async def scrape():
         print(f"  found {len(status_urls)} article(s)", flush=True)
 
         if not status_urls:
-            print("WARN: zero articles found — cookie may be invalid", flush=True)
+            print("WARN: zero articles found — check docs/debug/articles-list.png", flush=True)
 
         # 2. Each article detail
         articles = []
