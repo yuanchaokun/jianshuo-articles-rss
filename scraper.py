@@ -120,30 +120,38 @@ async def scrape():
 
                 data = await page.evaluate("""
                     () => {
-                        const titleEl = document.querySelector('h1');
                         const articleEl = document.querySelector('article');
                         const dateEl = document.querySelector('time');
                         const text = articleEl?.innerText || '';
-                        const cleaned = text
-                            .split('\\n')
-                            .filter(l => {
-                                const t = l.trim();
-                                if (!t) return false;
-                                if (['Article','Follow','Reply','Repost','Share'].includes(t)) return false;
-                                return true;
-                            })
-                            .join('\\n');
+                        // Strip nav/UI lines, then assume:
+                        //   line 0 = title
+                        //   line 1+ until first @username = body of the article
+                        // The page layout: "Article" | <title> | <user display name> | "@username" | "·" | <date> | "Follow" | counts | <body…>
+                        const rawLines = text.split('\\n').map(s => s.trim()).filter(Boolean);
+                        const noiseExact = new Set(['Article','Follow','Reply','Repost','Share','·','To view keyboard shortcuts, press question mark','View keyboard shortcuts']);
+                        const lines = rawLines.filter(l => !noiseExact.has(l));
+                        // Find body start: the index right after the first line that starts with '@' or matches a counts pattern
+                        let bodyStart = 0;
+                        for (let i = 0; i < lines.length; i++) {
+                            if (lines[i].startsWith('@') || /^\\d+(\\.\\d+)?[KMB]?$/.test(lines[i])) {
+                                bodyStart = Math.max(bodyStart, i + 1);
+                            }
+                        }
+                        // Title = first non-noise line that isn't a date/handle
+                        const title = lines[0] || '';
+                        const body = lines.slice(bodyStart).join('\\n');
                         return {
-                            title: titleEl?.innerText?.trim() || '',
-                            content: cleaned,
-                            contentLen: cleaned.length,
+                            title,
+                            content: body,
+                            contentLen: body.length,
+                            rawHead: rawLines.slice(0, 8),
                             date: dateEl?.getAttribute('datetime') || ''
                         };
                     }
                 """)
-                print(f"  title={data['title'][:60]!r} content_len={data['contentLen']}", flush=True)
+                print(f"  title={data['title'][:60]!r} content_len={data['contentLen']} head={data['rawHead']}", flush=True)
 
-                if not data["title"] or data["contentLen"] < 100:
+                if not data["title"] or data["contentLen"] < 50:
                     print(f"  skipped (title/content too short)", flush=True)
                     continue
 
