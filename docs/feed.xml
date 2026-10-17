@@ -7,7 +7,7 @@
     <docs>http://www.rssboard.org/rss-specification</docs>
     <generator>python-feedgen</generator>
     <language>zh-cn</language>
-    <lastBuildDate>Sat, 17 Oct 2026 13:31:54 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 17 Oct 2026 16:47:24 +0000</lastBuildDate>
     <item>
       <title>改源代码</title>
       <link>https://x.com/jianshuo/status/2059197567456666012</link>
@@ -33,7 +33,7 @@
 后注&lt;br&gt;
 这篇文章本身，就是用我改过的那份 SKILL.md 写出来的。我只给了 AI 三个字——「改源代码」——剩下的，是它按文件里那些规矩，一字一字长出来的。&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 4:58 PM · May 26, 2026&lt;br&gt;
 78.5K&lt;br&gt;
 Views&lt;br&gt;
@@ -99,9 +99,9 @@ Hermes: hermes skills tap add jianshuo/claude-skills &amp;&amp; hermes skills in
 skill 叫 wjs-eating-and-growing，github 上能找到。&lt;br&gt;
 correct me if I am wrong——欢迎拍砖。&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 5:50 PM · May 26, 2026&lt;br&gt;
-2,101&lt;br&gt;
+2,102&lt;br&gt;
 Views&lt;br&gt;
 1&lt;br&gt;
 2</description>
@@ -177,9 +177,9 @@ PM 团队（也是个文件夹）：在用户需求和工程团队之间做需�
 我猜未来一段时间，新一波"用 AI 重写公司"的人，干的就是这件事。不是把现有公司的某个岗位用 AI 替代，而是把"组织"这个东西本身，从 head count 重新写成文件夹。&lt;br&gt;
 correct me if I am wrong——你现在的工作里，有没有哪一块"团队"已经被你悄悄变成了一个文件夹？欢迎告诉我。&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 9:48 PM · May 26, 2026&lt;br&gt;
-3,359&lt;br&gt;
+3,360&lt;br&gt;
 Views&lt;br&gt;
 1&lt;br&gt;
 6&lt;br&gt;
@@ -224,9 +224,9 @@ v0.3.0（2026-05-23）&lt;br&gt;
 Star History&lt;br&gt;
 安装 / 升级&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 10:01 PM · May 26, 2026&lt;br&gt;
-2,025&lt;br&gt;
+2,026&lt;br&gt;
 Views&lt;br&gt;
 1&lt;br&gt;
 1</description>
@@ -252,9 +252,9 @@ Views&lt;br&gt;
 我们或许明年，就会怀念那种大家用小肉手来交流的年代吧，就如同怀念一切我们小时候经历过的那些「纯情」年代一样，但我们回不去。&lt;br&gt;
 不是不能回去，而是不愿意回去。&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 8:02 PM · Jun 3, 2026&lt;br&gt;
-2,846&lt;br&gt;
+2,847&lt;br&gt;
 Views&lt;br&gt;
 1&lt;br&gt;
 2&lt;br&gt;
@@ -285,7 +285,7 @@ json&lt;br&gt;
 LLM 会根据上下文和你提供的工具，找到合适的工具，把最终的项目完成。&lt;br&gt;
 就是这简单的 56 行，是大多数 Coding Agent 的骨架。在这之上可以加很多更多的功能，比如 Skills 的支持等。&lt;br&gt;
 Want to publish your own Article?&lt;br&gt;
-Upgrade to Premium&lt;br&gt;
+Upgrade to Plus&lt;br&gt;
 11:30 PM · Jun 9, 2026&lt;br&gt;
 11.9K&lt;br&gt;
 Views&lt;br&gt;
